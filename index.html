@@ -1,0 +1,77 @@
+<html>
+  <head> </head>
+  <body>
+    <h1>Teste Multiplicação e HTTP request no web worker</h1>
+    <span>Numero a</span>
+    <input type="number" id="na" />
+    <span>Numero b</span>
+    <input type="number" id="nb" />
+
+    <button id="runbutton">Rodar WebWorker</button>
+
+    <h2>Resultado AJAX</h2>
+    <div id="resultajax"></div>
+    <h2>Resultado Multiplicação</h2>
+    <div id="resultmultiply"></div>
+    <h2>Resultado Longo</h2>
+    <div id="resultlong"></div>
+  </body>
+  <script>
+    document.querySelector("#runbutton").addEventListener(
+      "click",
+      function (event) {
+        event.preventDefault();
+
+        runWebWorker();
+      },
+      false
+    );
+
+    const runWebWorker = () => {
+      if (window.Worker) {
+        const worker = new Worker("./worker.js");
+        const worker2 = new Worker("./worker2.js");
+
+        const resultajax = document.querySelector("#resultajax");
+        const resultmultiply = document.querySelector("#resultmultiply");
+        const resultlong = document.querySelector("#resultlong");
+        const a = parseInt(document.querySelector("#na").value);
+        const b = parseInt(document.querySelector("#nb").value);
+        let finishedw1 = 0;
+        let finishedw2 = 0;
+
+        worker.postMessage([a, b]);
+        console.log("Messagem enviada para o worker 1");
+
+        worker.onmessage = function (e) {
+          console.log("recebeu mensagem do worker 1", e);
+
+          if (e.data.resultmultiply) {
+            finishedw1++;
+            resultmultiply.innerHTML = e.data.resultmultiply;
+          }
+
+          if (e.data.resultajax) {
+            finishedw1++;
+            resultajax.innerHTML = e.data.resultajax.data;
+          }
+
+          if (finishedw1 === 2) worker.terminate();
+        };
+
+        worker2.postMessage([10000000]);
+        console.log("Messagem enviada para o worker 2");
+
+        worker2.onmessage = function (e) {
+          console.log("recebeu mensagem do worker 2", e);
+
+          if (e.data.resultlong) {
+            finishedw2++;
+            resultlong.innerHTML = e.data.resultlong;
+          }
+          if (finishedw2 === 2) worker2.terminate();
+        };
+      }
+    };
+  </script>
+</html>
